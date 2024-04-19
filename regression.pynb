@@ -1,0 +1,137 @@
+LINEAR REGRESSION MODEL FOR CROP PRODUCTION DATASET IN INDIA
+#importing necaesary packages
+import pandas as pd
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import mean_absolute_error
+import seaborn as sns
+from statsmodels.stats import weightstats as stests
+#loading the dataset
+df3=pd.read_csv("/content/Data_after_rainfall (1).csv")
+df3
+df3.head()
+print(f"Number of rows in df3: {len(df3)}")
+df3.shape
+df3.info()
+df3.describe()
+print(df3.isnull().sum())
+df3.fillna(df3.median,inplace=True)
+print(df3.isnull().sum())
+highest_mean=np.mean(df3["rainfall"])
+print(highest_mean)
+ztest,pvalue=stests.ztest(df3["rainfall"],value=70)
+print(pvalue)
+if pvalue<0.05:
+  print("Reject the null hypothesis")
+else:
+  print("Accepting the null hypothesis")
+import numpy as np
+from scipy import stats
+
+def remove_outliers_zscore(data, threshold=3):
+    z_scores = np.abs(stats.zscore(data))
+    outliers_removed = data[(z_scores < threshold)]
+    return outliers_removed
+
+rainfall_data = np.random.normal(loc=50, scale=10, size=100)
+cleaned_data = remove_outliers_zscore(rainfall_data)
+
+print("Original data length:", len(rainfall_data))
+print("Cleaned data length:", len(cleaned_data))
+plt.figure(figsize=(8, 6))
+sns.boxplot(x='rainfall', data=df3)
+plt.title('Box Plot of rainfall')
+plt.xlabel('Rainfall')
+plt.ylabel('Values')
+plt.show()
+
+sns.histplot(df3['rainfall'],bins=20)
+plt.title('Distribution of Rainfall')
+plt.xlabel('Rainfall')
+plt.ylabel('Frequency')
+plt.show()
+
+sns.scatterplot(x='Area_in_hectares', y='rainfall', data=df3)
+plt.xlabel('Area_in_hectares')
+plt.ylabel('Rainfall')
+plt.title('Scatter plot of  Area_in_hectares vs Rainfall')
+plt.show()
+
+sns.scatterplot(x='Production_in_tons', y='rainfall', data=df3)
+plt.xlabel('Production_in_tons')
+plt.ylabel('Rainfall')
+plt.title('Scatter plot of Rainfall vs Production_in_tons')
+plt.show()
+
+sns.scatterplot(x='Yield_ton_per_hec', y='rainfall', data=df3)
+plt.xlabel('Yield_ton_per_hec')
+plt.ylabel('Rainfall')
+plt.title('Scatter plot of Rainfall vs Yield_ton_per_hec')
+plt.show()
+
+correlation_matrix = df3.corr()
+print(correlation_matrix['rainfall'].sort_values(ascending=False))
+
+sns.heatmap(df3.corr(),annot=True,color="pink")
+plt.title('Correlation for After Rainfall dataset attributes')
+plt.show()
+
+#Assign the train test split and select the Dependent and Independent variables
+X = df3[['rainfall']].values
+y = df3['Yield_ton_per_hec'].values
+print(f"Shape of X:{X.shape}")
+print(f"Shape of y:{y.shape}")
+
+X=sm.add_constant(X)
+np.random.seed(42)
+X_train,X_test,y_train,y_test=train_test_split(X, y, test_size=0.2, random_state=42)
+model=sm.OLS(y_train,X_train).fit()
+print(model.summary())
+
+#Calculate the residuals
+residuals=model.resid
+#Calculate the Standardized residuals
+std_residuals=(residuals-np.mean(residuals))/np.std(residuals)
+#Calculate the square root of the absolute standardized residuals
+sqrt_std_residuals=np.sqrt(np.abs(std_residuals))
+
+#plotting using seaborn library
+sns.scatterplot(x=df3['Production_in_tons'], y=df3['Yield_ton_per_hec'])
+plt.title('Relationship between Data After Rainfall and Yield')
+plt.xlabel('Production in tons After Rainfall')
+plt.ylabel('Yield per Ton per Hectare after Rainfall')
+sns.regplot(x=df3['Area_in_hectares'], y=df3['Yield_ton_per_hec'], scatter=False, color='red')
+plt.show()
+
+#Create the scale location Plot
+plt.scatter(model.fittedvalues,sqrt_std_residuals)
+plt.xlabel("Fitted Values")
+plt.ylabel("√|Standardized Residuals|")
+plt.title("Scale Location Plot")
+plt.axhline(y=1,color='r')
+plt.show()
+
+#Obtain residuals from your regression model
+residuals=model.resid
+#Create a normality Q-Q Plot
+sm.qqplot(residuals,line="s")
+plt.title("Normality Q-Q plot")
+plt.show()
+
+#Getting prediction
+predictions=model.predict(X_test)
+#Calculate Mean Absolute Error(MAE)
+mae=mean_absolute_error(y_test,predictions)
+print(f"Mean Absolute Error(MAE):{mae}")
+#Calculate Mean Squared Error(MSE)
+mse=mean_squared_error(y_test,predictions)
+print(f"Mean Squared Error(MSE):{mse}")
+#Calculate Root Mean Squared Error(RMSE)
+rmse=np.sqrt(mse)
+print(f"Root Mean Squared Error(RMSE):{rmse}")
